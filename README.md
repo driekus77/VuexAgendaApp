@@ -1,2 +1,0 @@
-# VuexAgendaApp
-Created with CodeSandbox
