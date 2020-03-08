@@ -1,8 +1,7 @@
 <template>
   <div id="appointments">
-    <h2>Appointments on: {{day.format("dddd DD MMMM YYYY")}}</h2>
-
-    <table class="appointments" v-if="appointments && appointments.length">
+    <h2>Appointments on: {{currentDay.format("dddd DD MMMM YYYY")}}</h2>
+    <table class="appointments" v-if="currentAppointments && currentAppointments.length">
       <thead>
         <tr>
           <th>Start</th>
@@ -11,19 +10,29 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="appointment in appointments" :key="appointment.key">
+        <tr
+          v-for="appointment in currentAppointments"
+          :key="appointment.appId"
+          @click="selectAppointment(appointment)"
+        >
           <td>
             <span style="text-align: right;">{{appointment.start.format('H:mm')}}</span>
           </td>
           <td>
-            <textarea class="app-text" v-model="appointment.text" cols="65" rows="2"/>
+            <textarea
+              class="app-text"
+              :value="appointment.text"
+              @change="onTextChange(appointment, $event)"
+              cols="65"
+              rows="2"
+            />
           </td>
           <td>
             <select
               id="label"
               type="text"
-              v-model="appointment.label"
-              @change="onLabelChange({day, appointment}, $event)"
+              :value="appointment.label"
+              @change="onLabelChange(appointment, $event)"
             >
               <option value="normal">Normal</option>
               <option value="important">Important</option>
@@ -36,19 +45,57 @@
 </template>
 
 <script>
+import { mapState, mapGetters, mapActions } from "vuex";
+
 export default {
   name: "appointments",
-  props: ["day", "appointments"],
-  methods: {
-    onLabelChange({ day, appointment }, event) {
-      var count = this.appointments
-        .get(this.day)
-        .hours.filter(h => h.label === "important").length;
+  computed: {
+    ...mapState(["currentYear", "currentMonth", "currentDay"]),
+    ...mapGetters(["getDaysInWeekById", "getAppointmentsByDay"]),
 
-      this.$emit("importantLabelChange", {
-        dayId: day.dayId(),
-        day,
-        count: count
+    currentAppointments: {
+      get() {
+        return this.getAppointmentsByDay(this.currentDay);
+      }
+    },
+
+    currentDayObj: {
+      get() {
+        return this.$store.getters.getDayById(this.currentDay.dayId());
+      },
+      set(value) {
+        this.updateDay(value);
+      }
+    },
+    currentAppointment: {
+      get() {
+        return this.$store.state.currentAppointment;
+      },
+      set(value) {
+        this.selectAppointment(value);
+      }
+    }
+  },
+  methods: {
+    ...mapActions(["selectAppointment", "updateDay", "updateAppointment"]),
+
+    onTextChange(appointment, event) {
+      this.updateAppointment({
+        appId: appointment.appId,
+        text: event.target.value
+      });
+    },
+    onLabelChange(appointment, event) {
+      this.updateAppointment({
+        appId: appointment.appId,
+        label: event.target.value
+      });
+
+      this.updateDay({
+        dayId: this.currentDay.dayId(),
+        labelCount: this.currentAppointments.filter(
+          h => h.label === "important"
+        ).length
       });
     }
   }

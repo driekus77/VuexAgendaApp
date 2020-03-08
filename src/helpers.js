@@ -4,18 +4,21 @@ import _ from "lodash";
 export function getCalendarWeeksPerMonth(year, month) {
   var arr = Array.from(
     {
-      length: getIsoWeeksInMonth(year, month)
+      length: getWeeksInMonth(year, month)
     },
     (x, i) =>
       moment({ year: year, month: month })
-        .startOf("isoWeek")
+        .startOf("month")
+        .startOf("week")
         .add(i, "weeks")
   );
 
   return arr.map(x => {
     return {
       weekId: x.weekId(),
-      weekNum: x.isoWeek(),
+      number: x.isoWeek(),
+      year: year,
+      month: month,
       start: x.startOf("isoWeek"),
       end: x.endOf("isoWeek"),
       monthId: x.monthId()
@@ -35,9 +38,13 @@ export function getCalendarDaysPerWeek(weekObj) {
     return {
       dayId: x.dayId(),
       date: x,
+      number: Number(x.format("D")),
+      dayOfWeek: Number(x.day()),
+      year: weekObj.year,
+      month: weekObj.month,
       labelCount: 0,
-      isInReqMonth: weekObj.monthId === x.monthId(),
-      weekObj: weekObj
+      weekObj: weekObj,
+      monthId: x.monthId()
     };
   });
 }
@@ -62,12 +69,12 @@ export function getItemsPerMonth(year, month, day) {
       length: n
     },
     (x, i) =>
-      moment(year + "-" + month + "-01", "YYYY-MM-DD")
+      moment({ year: year, month: month, day: day })
         .startOf("isoWeek")
         .add(i, "days")
   );
 
-  var reqMonthId = moment(year + "-" + month + "-01", "YYYY-MM-DD").monthId();
+  var reqMonthId = moment({ year: year, month: month, day: day }).monthId();
   return arr.map(x => {
     return {
       dayId: x.dayId(),
@@ -79,28 +86,26 @@ export function getItemsPerMonth(year, month, day) {
 }
 
 export function getFullMonthName(year, month, day) {
-  return moment(year + "-" + month + "-" + day, "YYYY-MM-DD").format("MMMM");
+  return moment({ year: year, month: month, day: day }).format("MMMM");
 }
 
-export function getIsoWeeksInMonth(year, month) {
-  var momentObj = moment(year + "-" + month + "-01", "YYYY-MM-DD");
+export function getWeeksInMonth(year, month) {
+  var momentObj = moment({ year: year, month: month });
 
-  var mFirstIsoWeekDayOfMonth = momentObj
+  var mFirstWeekDayOfMonth = momentObj
     .clone()
     .startOf("month")
-    .startOf("isoWeek");
-  var mLastIsoWeekDayOfMonth = momentObj
+    .startOf("week");
+  var mLastWeekDayOfMonth = momentObj
     .clone()
     .endOf("month")
-    .endOf("isoWeek");
+    .endOf("week");
 
-  var d = moment.duration(mLastIsoWeekDayOfMonth.diff(mFirstIsoWeekDayOfMonth));
-
-  return d.weeks() + 1;
+  return mLastWeekDayOfMonth.diff(mFirstWeekDayOfMonth, "weeks") + 1;
 }
 
 export function getIsoWeekDaysInMonth(year, month, day) {
-  var momentObj = moment(year + "-" + month + "-" + day, "YYYY-MM-DD");
+  var momentObj = moment({ year: year, month: month, day: day });
 
   var mFirstIsoWeekDayOfMonth = momentObj
     .clone()
@@ -114,6 +119,24 @@ export function getIsoWeekDaysInMonth(year, month, day) {
   var d = moment.duration(mLastIsoWeekDayOfMonth.diff(mFirstIsoWeekDayOfMonth));
 
   return d.asDays() + 1;
+}
+
+export function initAppointments(monthId, dayId, startHour, endHour) {
+  return Array.from({ length: endHour - startHour }, (_, i) => i).reduce(
+    (r, hour) => {
+      r.push({
+        appId: dayId * 1000000 + startHour + hour,
+        start: moment({ hour: startHour + hour, minute: 0 }),
+        text: "",
+        label: "normal",
+        dayId: dayId,
+        monthId: monthId
+      });
+
+      return r;
+    },
+    []
+  );
 }
 
 moment.prototype.monthId = function() {

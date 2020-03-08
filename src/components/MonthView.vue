@@ -4,27 +4,27 @@
     <table class="month">
       <thead>
         <tr>
-          <th>week</th>
+          <th>Week</th>
+          <th>Sun.</th>
           <th>Mon.</th>
           <th>Tue.</th>
           <th>Wed.</th>
           <th>Thu.</th>
           <th>Fri.</th>
           <th>Sat.</th>
-          <th>Sun.</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="week in monthMap" :key="week[0].date.weekId()" class="week">
-          <td class="weeknum">{{week[0].date.format("w")}}</td>
-          <td v-for="weekday in week" :key="weekday.dayId" class="weekday">
+        <tr v-for="week in currentWeeksInMonth" :key="week.weekId" class="week">
+          <td class="weeknum">{{week.number}}</td>
+          <td v-for="day in getDaysInWeekById(week.weekId)" :key="day.dayId" class="weekday">
             <button
-              :disabled="!weekday.isInReqMonth"
-              @click="onDayClick(weekday.date, $event)"
+              :disabled="!checkValidMonthDay(day)"
+              @click="onDayClick(day.date, $event)"
               class="day"
-              :class="{ 'badge-top-right': weekday.labelCount }"
-              :data-count="weekday.labelCount"
-            >{{weekday.date.format("D")}}</button>
+              :class="{ 'badge-top-right': day.labelCount }"
+              :data-count="day.labelCount"
+            >{{day.number}}</button>
           </td>
         </tr>
       </tbody>
@@ -33,43 +33,40 @@
 </template>
 
 <script>
+import { mapState, mapGetters, mapActions } from "vuex";
 import { getFullMonthName } from "../helpers";
-import moment from "moment";
-import _ from "lodash";
 
 export default {
   name: "month-view",
-  props: ["year", "month", "monthMap", "importantDateCount"],
-  data() {
-    return {
-      currentDate: moment()
-    };
-  },
+  props: ["importantDateCount"],
   methods: {
-    checkValidMonthDay(m) {
-      return m.month() + 1 === Number(this.month);
+    checkValidMonthDay(d) {
+      return d.date.month() === this.currentMonth;
     },
     onDayClick(day, event) {
-      this.currentDate = day;
+      this.currentDay = day;
       this.$emit("clicked", day);
     }
   },
   computed: {
+    ...mapState(["currentYear", "currentMonth"]),
+    ...mapGetters(["getDaysInWeekById"]),
+
     monthName() {
-      return getFullMonthName(this.year, this.month);
-    }
-  },
-  watch: {
-    importantDateCount(newVal, oldVal) {
-      var week = _.find(this.monthMap, function(x) {
-        return x[0].date.weekId() === newVal.day.weekId();
-      });
-
-      var day = week.find(function(d) {
-        return d.date.dayId() === newVal.day.dayId();
-      });
-
-      day.labelCount = newVal.count;
+      return getFullMonthName(this.currentYear, this.currentMonth);
+    },
+    currentDay: {
+      get() {
+        return this.$store.state.currentDay;
+      },
+      set(value) {
+        this.$store.commit("SELECT_DAY", value);
+      }
+    },
+    currentWeeksInMonth: {
+      get() {
+        return this.$store.getters.currentWeeksInMonth;
+      }
     }
   }
 };
