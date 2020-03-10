@@ -38,10 +38,19 @@
       <div class="row">
         <MonthView
           class="col-4 montview"
+          :year="currentYear"
+          :month="currentMonth"
+          :day="currentDay"
           :importantDateCount="importantDateCount"
           @clicked="onDayClick"
         />
-        <Appointments class="col-8 appointments" @importantLabelChange="onImportantLabelChange"/>
+        <Appointments
+          class="col-8 appointments"
+          :year="currentYear"
+          :month="currentMonth"
+          :day="currentDay"
+          @importantLabelChange="onImportantLabelChange"
+        />
       </div>
     </div>
   </div>
@@ -53,43 +62,18 @@ import Appointments from "./Appointments";
 
 import moment from "moment";
 
-import { mapGetters, mapActions } from "vuex";
-
 export default {
   name: "agenda-app",
   data() {
     return {
+      currentYear: moment().year(),
+      currentMonth: moment().month(),
+      currentDay: moment(),
+
       importantDateCount: { dayId: moment().dayId(), day: moment(), count: 0 }
     };
   },
-  computed: {
-    currentYear: {
-      get() {
-        return this.$store.state.currentYear;
-      },
-      set(value) {
-        this.$store.commit("SELECT_YEAR", value);
-      }
-    },
-    currentMonth: {
-      get() {
-        return this.$store.state.currentMonth;
-      },
-      set(value) {
-        this.$store.dispatch("selectMonth", value);
-      }
-    },
-    currentDate: {
-      get() {
-        return this.$store.state.currentDate;
-      },
-      set(value) {
-        this.$store.dispatch("selectDay", { date: value });
-      }
-    },
-
-    ...mapGetters(["currentMonthId", "currentWeekId", "currentDayId"])
-  },
+  computed: {},
   mounted() {
     this.currentYear = moment().year();
     this.currentMonth = moment().month();
@@ -99,13 +83,10 @@ export default {
     Appointments
   },
   methods: {
-    ...mapActions(["initMonth"]),
-
     onDayClick(day) {
-      this.currentAppointmentDate = day;
+      this.currentDay = day.date;
     },
     onImportantLabelChange({ dayId, day, count }) {
-      //alert("dayId: " + dayId + " count: " + count + " typeof(count): " + typeof(count));
       this.importantDateCount = { dayId: dayId, day: day, count: count };
     }
   }

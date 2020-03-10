@@ -1,104 +1,107 @@
 <template>
   <div id="appointments">
     <h2>Appointments on: {{currentDay.format("dddd DD MMMM YYYY")}}</h2>
-    <table class="appointments" v-if="currentAppointments && currentAppointments.length">
-      <thead>
-        <tr>
-          <th>Start</th>
-          <th>Appointment</th>
-          <th>Label</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="appointment in currentAppointments"
-          :key="appointment.appId"
-          @click="selectAppointment(appointment)"
-        >
-          <td>
-            <span style="text-align: right;">{{appointment.start.format('H:mm')}}</span>
-          </td>
-          <td>
-            <textarea
-              class="app-text"
-              :value="appointment.text"
-              @change="onTextChange(appointment, $event)"
-              cols="65"
-              rows="2"
-            />
-          </td>
-          <td>
-            <select
-              id="label"
-              type="text"
-              :value="appointment.label"
-              @change="onLabelChange(appointment, $event)"
-            >
-              <option value="normal">Normal</option>
-              <option value="important">Important</option>
-            </select>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="appointments" style="display: table;table-layout:fixed;">
+      <div style="display: table-head-group">
+        <div style="display: table-row">
+          <div style="display: table-cell">Start</div>
+          <div style="display: table-cell">Appointment</div>
+          <div style="display: table-cell">Label</div>
+        </div>
+      </div>
+      <div style="table-column-group">
+        <div v-for="(appointment, index) in currentAppointments" :key="index">
+          <Appointment :key="appointment.appId" :appointment="appointment"/>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from "vuex";
+import Vue from "vue";
+import { initAppointments } from "../helpers";
+import Appointment from "./Appointment";
+import _ from "lodash";
 
 export default {
   name: "appointments",
+  components: { Appointment },
+  props: ["year", "month", "day"],
+  data() {
+    return {
+      cacheById: {},
+      cacheAllIds: [],
+      dayIds: []
+    };
+  },
   computed: {
-    ...mapState(["currentYear", "currentMonth", "currentDay"]),
-    ...mapGetters(["getDaysInWeekById", "getAppointmentsByDay"]),
+    currentYear: {
+      get() {
+        return this.year;
+      }
+    },
+    currentMonth: {
+      get() {
+        return this.month;
+      }
+    },
+    currentDay: {
+      get() {
+        return this.day;
+      }
+    },
 
     currentAppointments: {
       get() {
-        return this.getAppointmentsByDay(this.currentDay);
-      }
-    },
-
-    currentDayObj: {
-      get() {
-        return this.$store.getters.getDayById(this.currentDay.dayId());
-      },
-      set(value) {
-        this.updateDay(value);
-      }
-    },
-    currentAppointment: {
-      get() {
-        return this.$store.state.currentAppointment;
-      },
-      set(value) {
-        this.selectAppointment(value);
+        return this.dayIds.map(appId => this.cacheById[appId]);
       }
     }
   },
+  created() {
+    this.$store.dispatch("appointment/load");
+  },
   methods: {
-    ...mapActions(["selectAppointment", "updateDay", "updateAppointment"]),
+    switchDay(day) {
+      var self = this;
 
-    onTextChange(appointment, event) {
-      this.updateAppointment({
-        appId: appointment.appId,
-        text: event.target.value
-      });
-    },
-    onLabelChange(appointment, event) {
-      this.updateAppointment({
-        appId: appointment.appId,
-        label: event.target.value
-      });
+      // First create a cache or add appointmentlist per day to cache.
+      if (!this.cacheAllIds.includes(day.hourId())) {
+        var arrDayApps = initAppointments(
+          this.year,
+          this.month,
+          this.day,
+          7,
+          19
+        );
 
-      this.updateDay({
-        dayId: this.currentDay.dayId(),
-        labelCount: this.currentAppointments.filter(
-          h => h.label === "important"
-        ).length
+        var arrIds = arrDayApps.map(item => item.appId);
+
+        Object.assign(self.cacheById, _.keyBy(arrDayApps, "appId"));
+
+        self.cacheAllIds.push(...arrIds);
+
+        self.dayIds = arrIds;
+      }
+
+      // "Enrich" the cache with data from state store.
+      var storeData = this.$store.getters["appointment/listByDayId"](
+        day.dayId()
+      );
+
+      storeData.forEach(function(item) {
+        console.log("Applying appointments for " + this.day.format());
+        Vue.set(self.cacheById, item.appId, item);
       });
     }
   }
+  /*,
+  watch: {
+    day(newVal, oldVal) {
+      this.applyStoreState(newVal);
+    }
+  }
+  */
 };
 </script>
 
@@ -112,5 +115,9 @@ export default {
   width: 100%;
   font-weight: bolder;
   font-size: 10pt;
+}
+
+.app-row {
+  height: 40px;
 }
 </style>

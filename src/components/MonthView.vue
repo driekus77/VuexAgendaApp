@@ -15,16 +15,18 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="week in currentWeeksInMonth" :key="week.weekId" class="week">
+        <tr v-for="week in currentWeeks" :key="week.weekId" class="week">
           <td class="weeknum">{{week.number}}</td>
-          <td v-for="day in getDaysInWeekById(week.weekId)" :key="day.dayId" class="weekday">
+          <td v-for="d in getDaysInWeek(week)" :key="d.dayId" class="weekday">
             <button
-              :disabled="!checkValidMonthDay(day)"
-              @click="onDayClick(day.date, $event)"
+              :disabled="!checkValidMonthDay(d)"
+              @click="onDayClick(d, $event)"
               class="day"
-              :class="{ 'badge-top-right': day.labelCount }"
-              :data-count="day.labelCount"
-            >{{day.number}}</button>
+              :class="{ 'badge-top-right': getCountImportantLabels(d), disabled: !checkValidMonthDay(d), 
+                      'today-day': checkToday(d),
+                        'selected-day': checkSelectedDay(d)}"
+              :data-count="getCountImportantLabels(d)"
+            >{{d.number}}</button>
           </td>
         </tr>
       </tbody>
@@ -33,39 +35,63 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from "vuex";
-import { getFullMonthName } from "../helpers";
+import moment from "moment";
+import {
+  getFullMonthName,
+  getCalendarWeeksPerMonth,
+  getCalendarDaysPerWeek
+} from "../helpers";
 
 export default {
   name: "month-view",
-  props: ["importantDateCount"],
+  props: ["year", "month", "day", "importantDateCount"],
   methods: {
     checkValidMonthDay(d) {
       return d.date.month() === this.currentMonth;
     },
-    onDayClick(day, event) {
-      this.currentDay = day;
-      this.$emit("clicked", day);
+    checkSelectedDay(d) {
+      return d.dayId === this.currentDay.dayId();
+    },
+    checkToday(d) {
+      return d.dayId === moment().dayId();
+    },
+    onDayClick(d, event) {
+      // Inform parent AgendaApp Component other day clicked!
+      this.$emit("clicked", d);
+    },
+    getDaysInWeek(weekObj) {
+      return getCalendarDaysPerWeek(weekObj);
+    },
+    getCountImportantLabels(d) {
+      return this.$store.getters["appointment/countLabelByDayId"](
+        d.dayId,
+        "important"
+      );
     }
   },
   computed: {
-    ...mapState(["currentYear", "currentMonth"]),
-    ...mapGetters(["getDaysInWeekById"]),
+    currentYear: {
+      get() {
+        return this.year;
+      }
+    },
+    currentMonth: {
+      get() {
+        return this.month;
+      }
+    },
+    currentDay: {
+      get() {
+        return this.day;
+      }
+    },
 
     monthName() {
       return getFullMonthName(this.currentYear, this.currentMonth);
     },
-    currentDay: {
+    currentWeeks: {
       get() {
-        return this.$store.state.currentDay;
-      },
-      set(value) {
-        this.$store.commit("SELECT_DAY", value);
-      }
-    },
-    currentWeeksInMonth: {
-      get() {
-        return this.$store.getters.currentWeeksInMonth;
+        return getCalendarWeeksPerMonth(this.currentYear, this.currentMonth);
       }
     }
   }
@@ -111,6 +137,14 @@ button.day:hover {
 
 button.day:active {
   cursor: grabbing;
+}
+
+button.today-day {
+  background-color: rgba(236, 142, 0, 0.377);
+}
+
+button.selected-day {
+  background-color: rgba(0, 243, 97, 0.377);
 }
 
 button.badge-top-right:before {

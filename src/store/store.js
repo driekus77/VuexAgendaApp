@@ -1,3 +1,4 @@
+/*
 import Vue from "vue";
 import Vuex from "vuex";
 import moment from "moment";
@@ -17,6 +18,12 @@ export const store = new Vuex.Store({
     currentYear: moment().year(),
     currentMonth: moment().month(),
     currentDay: moment(),
+
+    currentMonthObj: {},
+    currentWeekObjs: [],
+    currentDayObj: {},
+
+    currentAppointments: [],
     currentAppointment: {},
 
     arrMonths: [],
@@ -131,6 +138,8 @@ export const store = new Vuex.Store({
     }
   },
   actions: {
+    selectYear({ commit, state }, year) {},
+
     selectMonth({ commit, state }, month) {
       if (
         state.arrMonths.length === 0 ||
@@ -194,3 +203,4 @@ export const store = new Vuex.Store({
     }
   }
 });
+*/

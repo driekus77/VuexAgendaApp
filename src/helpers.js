@@ -121,16 +121,27 @@ export function getIsoWeekDaysInMonth(year, month, day) {
   return d.asDays() + 1;
 }
 
-export function initAppointments(monthId, dayId, startHour, endHour) {
+export function initAppointments(year, month, day, startHour, endHour) {
   return Array.from({ length: endHour - startHour }, (_, i) => i).reduce(
     (r, hour) => {
       r.push({
-        appId: dayId * 1000000 + startHour + hour,
-        start: moment({ hour: startHour + hour, minute: 0 }),
+        id: day.dayId() * 1000000 + startHour + hour,
+        appId: day.dayId() * 1000000 + startHour + hour,
+        start: moment({
+          year: year,
+          month: month,
+          day: day.date(),
+          hour: startHour + hour,
+          minute: 0
+        }),
+        hourInDayId: moment({
+          hour: startHour + hour,
+          minute: 0
+        }).hourInDayId(),
         text: "",
         label: "normal",
-        dayId: dayId,
-        monthId: monthId
+        dayId: day.dayId(),
+        monthId: day.monthId()
       });
 
       return r;
@@ -149,4 +160,11 @@ moment.prototype.weekId = function() {
 
 moment.prototype.dayId = function() {
   return Number(this.format("YYYYMMDD"));
+};
+
+moment.prototype.hourId = function() {
+  return Number(this.format("YYYYMMDDHH"));
+};
+moment.prototype.hourInDayId = function() {
+  return Number(this.format("HHmm"));
 };
