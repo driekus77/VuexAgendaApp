@@ -125,8 +125,13 @@ export function initAppointments(year, month, day, startHour, endHour) {
   return Array.from({ length: endHour - startHour }, (_, i) => i).reduce(
     (r, hour) => {
       r.push({
-        id: day.dayId() * 1000000 + startHour + hour,
-        appId: day.dayId() * 1000000 + startHour + hour,
+        id: moment({
+          year: year,
+          month: month,
+          day: day.date(),
+          hour: startHour + hour,
+          minute: 0
+        }).hourId(),
         start: moment({
           year: year,
           month: month,
@@ -163,7 +168,7 @@ moment.prototype.dayId = function() {
 };
 
 moment.prototype.hourId = function() {
-  return Number(this.format("YYYYMMDDHH"));
+  return Number(this.format("YYYYMMDDHHmm"));
 };
 moment.prototype.hourInDayId = function() {
   return Number(this.format("HHmm"));

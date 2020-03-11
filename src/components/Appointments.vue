@@ -1,6 +1,6 @@
 <template>
   <div id="appointments">
-    <h3>Appointments on: {{currentDay.format("dddd DD MMMM YYYY")}}</h3>
+    <h3>Appointments on: {{selectedMoment.format("dddd DD MMMM YYYY")}}</h3>
     <div class="appointments" style="display: table;table-layout:fixed;">
       <div style="display: table-head-group">
         <div style="display: table-row">
@@ -28,47 +28,21 @@ import _ from "lodash";
 export default {
   name: "appointments",
   components: { Appointment },
-  props: {
-    year: {
-      type: Number,
-      required: true
-    },
-    month: {
-      type: Number,
-      required: true
-    },
-    day: {
-      type: moment,
-      required: true
-    }
-  },
-  data() {
-    return {
-      cacheById: {},
-      cacheAllIds: [],
-      dayIds: []
-    };
-  },
   computed: {
-    currentYear: {
+    selectedMoment: {
       get() {
-        return this.year;
-      }
-    },
-    currentMonth: {
-      get() {
-        return this.month;
-      }
-    },
-    currentDay: {
-      get() {
-        return this.day;
+        return this.$store.getters["agenda/selectedMoment"];
+      },
+      set(value) {
+        this.$store.dispatch("agenda/selectMoment", value);
       }
     },
 
     currentAppointments: {
       get() {
-        return this.dayIds.map(appId => this.cacheById[appId]);
+        return this.$store.getters["appointment/cacheListByDayId"](
+          this.selectedMoment.dayId()
+        );
       }
     }
   },

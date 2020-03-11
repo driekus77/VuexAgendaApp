@@ -23,7 +23,7 @@
               @click="onDayClick(d, $event)"
               class="day"
               :class="{ 'badge-top-right': getCountImportantLabels(d), disabled: !checkValidMonthDay(d), 
-                      'today-day': checkToday(d),
+                        'today-day': checkToday(d),
                         'selected-day': checkSelectedDay(d)}"
               :data-count="getCountImportantLabels(d)"
             >{{d.number}}</button>
@@ -45,18 +45,6 @@ import {
 export default {
   name: "month-view",
   props: {
-    year: {
-      type: Number,
-      required: true
-    },
-    month: {
-      type: Number,
-      required: true
-    },
-    value: {
-      type: moment,
-      required: true
-    },
     importantDateCount: {
       type: Object,
       required: true
@@ -65,19 +53,18 @@ export default {
   methods: {
     checkValidMonthDay(d) {
       if (!d) return false;
-      return d.date.month() === this.currentMonth;
+      return d.date.month() === this.selectedMoment.month();
     },
     checkSelectedDay(d) {
       if (!d) return false;
-      return d.dayId === this.currentDay.dayId();
+      return d.dayId === this.selectedMoment.dayId();
     },
     checkToday(d) {
       if (!d) return false;
       return d.dayId === moment().dayId();
     },
     onDayClick(d, event) {
-      // Inform parent AgendaApp Component other day clicked!
-      this.$emit("input", d.date);
+      this.selectedMoment = d.date;
     },
     getDaysInWeek(weekObj) {
       return getCalendarDaysPerWeek(weekObj);
@@ -90,28 +77,27 @@ export default {
     }
   },
   computed: {
-    currentYear: {
+    selectedMoment: {
       get() {
-        return this.year;
-      }
-    },
-    currentMonth: {
-      get() {
-        return this.month;
-      }
-    },
-    currentDay: {
-      get() {
-        return this.value;
+        return this.$store.getters["agenda/selectedMoment"];
+      },
+      set(value) {
+        this.$store.dispatch("agenda/selectMoment", value);
       }
     },
 
     monthName() {
-      return getFullMonthName(this.currentYear, this.currentMonth);
+      return getFullMonthName(
+        this.selectedMoment.year(),
+        this.selectedMoment.month()
+      );
     },
     currentWeeks: {
       get() {
-        return getCalendarWeeksPerMonth(this.currentYear, this.currentMonth);
+        return getCalendarWeeksPerMonth(
+          this.selectedMoment.year(),
+          this.selectedMoment.month()
+        );
       }
     }
   }

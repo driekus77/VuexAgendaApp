@@ -4,7 +4,6 @@
       <span style="text-align: right;">{{appointment.start.format('H:mm')}}</span>
     </div>
     <div style="display: table-cell">
-      {{appointment.text}}
       <textarea
         class="app-text"
         :value="appointment.text"
