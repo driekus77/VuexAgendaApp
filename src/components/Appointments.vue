@@ -1,17 +1,17 @@
 <template>
   <div id="appointments">
-    <h2>Appointments on: {{currentDay.format("dddd DD MMMM YYYY")}}</h2>
+    <h3>Appointments on: {{currentDay.format("dddd DD MMMM YYYY")}}</h3>
     <div class="appointments" style="display: table;table-layout:fixed;">
       <div style="display: table-head-group">
         <div style="display: table-row">
-          <div style="display: table-cell">Start</div>
-          <div style="display: table-cell">Appointment</div>
-          <div style="display: table-cell">Label</div>
+          <div style="display: table-cell;width: 50px;">Start</div>
+          <div style="display: table-cell;width: 500px;">Appointment</div>
+          <div style="display: table-cell;width: 100px;">Label</div>
         </div>
       </div>
       <div style="table-column-group">
-        <div v-for="(appointment, index) in currentAppointments" :key="index">
-          <Appointment :key="appointment.appId" :appointment="appointment"/>
+        <div v-for="(appointment) in currentAppointments" :key="appointment.appId">
+          <Appointment :name="appointment.appId" :appointment="appointment"/>
         </div>
       </div>
     </div>
@@ -20,6 +20,7 @@
 
 <script>
 import Vue from "vue";
+import moment from "moment";
 import { initAppointments } from "../helpers";
 import Appointment from "./Appointment";
 import _ from "lodash";
@@ -27,7 +28,20 @@ import _ from "lodash";
 export default {
   name: "appointments",
   components: { Appointment },
-  props: ["year", "month", "day"],
+  props: {
+    year: {
+      type: Number,
+      required: true
+    },
+    month: {
+      type: Number,
+      required: true
+    },
+    day: {
+      type: moment,
+      required: true
+    }
+  },
   data() {
     return {
       cacheById: {},
@@ -95,13 +109,6 @@ export default {
       });
     }
   }
-  /*,
-  watch: {
-    day(newVal, oldVal) {
-      this.applyStoreState(newVal);
-    }
-  }
-  */
 };
 </script>
 

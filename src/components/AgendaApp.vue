@@ -40,9 +40,8 @@
           class="col-4 montview"
           :year="currentYear"
           :month="currentMonth"
-          :day="currentDay"
           :importantDateCount="importantDateCount"
-          @clicked="onDayClick"
+          v-model="currentDay"
         />
         <Appointments
           class="col-8 appointments"
@@ -73,19 +72,11 @@ export default {
       importantDateCount: { dayId: moment().dayId(), day: moment(), count: 0 }
     };
   },
-  computed: {},
-  mounted() {
-    this.currentYear = moment().year();
-    this.currentMonth = moment().month();
-  },
   components: {
     MonthView,
     Appointments
   },
   methods: {
-    onDayClick(day) {
-      this.currentDay = day.date;
-    },
     onImportantLabelChange({ dayId, day, count }) {
       this.importantDateCount = { dayId: dayId, day: day, count: count };
     }

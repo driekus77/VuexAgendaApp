@@ -17,7 +17,7 @@
       <tbody>
         <tr v-for="week in currentWeeks" :key="week.weekId" class="week">
           <td class="weeknum">{{week.number}}</td>
-          <td v-for="d in getDaysInWeek(week)" :key="d.dayId" class="weekday">
+          <td v-for="(d) in getDaysInWeek(week)" :key="d.dayId" class="weekday">
             <button
               :disabled="!checkValidMonthDay(d)"
               @click="onDayClick(d, $event)"
@@ -44,20 +44,40 @@ import {
 
 export default {
   name: "month-view",
-  props: ["year", "month", "day", "importantDateCount"],
+  props: {
+    year: {
+      type: Number,
+      required: true
+    },
+    month: {
+      type: Number,
+      required: true
+    },
+    value: {
+      type: moment,
+      required: true
+    },
+    importantDateCount: {
+      type: Object,
+      required: true
+    }
+  },
   methods: {
     checkValidMonthDay(d) {
+      if (!d) return false;
       return d.date.month() === this.currentMonth;
     },
     checkSelectedDay(d) {
+      if (!d) return false;
       return d.dayId === this.currentDay.dayId();
     },
     checkToday(d) {
+      if (!d) return false;
       return d.dayId === moment().dayId();
     },
     onDayClick(d, event) {
       // Inform parent AgendaApp Component other day clicked!
-      this.$emit("clicked", d);
+      this.$emit("input", d.date);
     },
     getDaysInWeek(weekObj) {
       return getCalendarDaysPerWeek(weekObj);
@@ -82,7 +102,7 @@ export default {
     },
     currentDay: {
       get() {
-        return this.day;
+        return this.value;
       }
     },
 
